@@ -18,14 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import {useRect} from './use-rect';
 import window from 'global/window';
 
 import XYPlot from 'plot/xy-plot';
-import {getDOMNode} from 'utils/react-utils';
-
-const CONTAINER_REF = 'container';
-
+// import {getDOMNode} from 'utils/react-utils';
 // As a performance enhancement, we want to only listen once
 const resizeSubscribers = [];
 const DEBOUNCE_DURATION = 100;
@@ -101,79 +99,52 @@ function getDisplayName(Component) {
  */
 
 function makeFlexible(Component, isWidthFlexible, isHeightFlexible) {
-  const ResultClass = class extends React.Component {
-    static get propTypes() {
-      const {height, width, ...otherPropTypes} = Component.propTypes; // eslint-disable-line no-unused-vars
-      return otherPropTypes;
-    }
+  const Result = oldProps => {
+    const [state, setState] = useState({height: 0, width: 0});
+    const [rect, ref] = useRect();
+    const handleResize = () => {
+      // const containerElement = getDOMNode(ref);
+      console.log('container >>>', rect);
+      rect && setState({width: rect.width, height: rect.height});
+    };
+    useEffect(() => {
+      // handleResize();
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    });
 
-    constructor(props) {
-      super(props);
-      this.state = {
-        height: 0,
-        width: 0
-      };
-    }
-
-    /**
-     * Get the width of the container and assign the width.
-     * @private
-     */
-    _onResize = () => {
-      const containerElement = getDOMNode(this[CONTAINER_REF]);
-      const {offsetHeight, offsetWidth} = containerElement;
-
-      const newHeight =
-        this.state.height === offsetHeight ? {} : {height: offsetHeight};
-
-      const newWidth =
-        this.state.width === offsetWidth ? {} : {width: offsetWidth};
-
-      this.setState({
-        ...newHeight,
-        ...newWidth
-      });
+    const {height, width} = state;
+    const props = {
+      ...oldProps,
+      animation: height === 0 && width === 0 ? null : oldProps.animation
     };
 
-    componentDidMount() {
-      this._onResize();
-      this.cancelSubscription = subscribeToDebouncedResize(this._onResize);
-    }
+    const updatedDimensions = {
+      ...(isHeightFlexible ? {height} : {}),
+      ...(isWidthFlexible ? {width} : {})
+    };
+    console.log('updated >>>', updatedDimensions);
 
-    componentWillReceiveProps() {
-      this._onResize();
-    }
-
-    componentWillUnmount() {
-      this.cancelSubscription();
-    }
-
-    render() {
-      const {height, width} = this.state;
-      const props = {
-        ...this.props,
-        animation: height === 0 && width === 0 ? null : this.props.animation
-      };
-
-      const updatedDimensions = {
-        ...(isHeightFlexible ? {height} : {}),
-        ...(isWidthFlexible ? {width} : {})
-      };
-
-      return (
-        <div
-          ref={ref => (this[CONTAINER_REF] = ref)}
-          style={{width: '100%', height: '100%'}}
-        >
-          <Component {...updatedDimensions} {...props} />
-        </div>
-      );
-    }
+    return (
+      <div
+        ref={ref}
+        style={{
+          border: 'solid',
+          display: 'flex',
+          height: '100%',
+          backgroundColor: 'pink',
+          flexGrow: '1',
+          flexShrink: '1'
+        }}
+      >
+        <Component {...updatedDimensions} {...props} />
+      </div>
+    );
   };
 
-  ResultClass.displayName = `Flexible${getDisplayName(Component)}`;
+  Result.displayName = `Flexible${getDisplayName(Component)}`;
 
-  return ResultClass;
+  return Result;
 }
 
 export function makeHeightFlexible(component) {
