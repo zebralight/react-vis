@@ -19,11 +19,10 @@
 // THE SOFTWARE.
 
 import React, {useEffect, useState, useRef} from 'react';
-import {useRect} from './use-rect';
 import window from 'global/window';
 
 import XYPlot from 'plot/xy-plot';
-import {getDOMNode} from 'utils/react-utils';
+// import {getDOMNode} from 'utils/react-utils';
 // As a performance enhancement, we want to only listen once
 const resizeSubscribers = [];
 const DEBOUNCE_DURATION = 100;
@@ -101,10 +100,8 @@ function getDisplayName(Component) {
 function makeFlexible(Component, isWidthFlexible, isHeightFlexible) {
   const Result = oldProps => {
     const [state, setState] = useState({height: 0, width: 0});
-    // const [rect, ref] = useRect();
     const ref = useRef(null);
     const handleResize = () => {
-      const containerElement = getDOMNode(ref);
       const computed = getComputedStyle(ref.current);
       const els = ['width', 'height'];
       const rect = Object.keys(computed)
@@ -113,10 +110,10 @@ function makeFlexible(Component, isWidthFlexible, isHeightFlexible) {
           ob[key] = parseInt(computed[key].split('px')[0], 10);
           return ob;
         }, {});
-      rect && setState({width: rect.width, height: rect.height});
+      if (rect) setState({width: rect.width, height: rect.height});
     };
     useEffect(() => {
-      // handleResize();
+      handleResize();
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     });
@@ -135,12 +132,9 @@ function makeFlexible(Component, isWidthFlexible, isHeightFlexible) {
       <div
         ref={ref}
         style={{
-          border: 'solid',
           display: 'flex',
           height: '100%',
-          backgroundColor: 'pink',
-          flexGrow: '1',
-          flexShrink: '1'
+          flex: '1 1'
         }}
       >
         <Component {...updatedDimensions} {...props} />
