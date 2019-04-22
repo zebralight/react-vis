@@ -537,8 +537,8 @@ class XYPlot extends React.Component {
         <div
           className={`rv-xy-plot ${className}`}
           style={{
-            width: `${width}px`,
-            height: `${height}px`,
+            width: `${width}`,
+            height: `${height}`,
             ...this.props.style
           }}
         />
@@ -548,8 +548,8 @@ class XYPlot extends React.Component {
     return (
       <div
         style={{
-          width: `${width}px`,
-          height: `${height}px`
+          width: `${width}`,
+          height: `${height}`
         }}
         className={`rv-xy-plot ${className}`}
       >
